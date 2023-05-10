@@ -90,6 +90,12 @@ func (r *workloadHealthReconciler) Reconcile(ctx context.Context, rt controller.
 	if workload.NodeName != "" {
 		nodeID := r.nodeMap.NodeIDFromWorkload(res, &workload)
 		r.nodeMap.TrackWorkload(res.Id, nodeID)
+
+		// It is important that getting the nodes health happens after tracking the
+		// Workload with the node mapper. If the order were reversed we could
+		// potentially miss events for data that changes after we read the node but
+		// before we configured the node mapper to map subsequent events to this
+		// workload.
 		nodeHealth, err = getNodeHealth(ctx, rt, nodeID)
 		if err != nil {
 			rt.Logger.Error("error looking up node health", "error", err, "node-id", nodeID)
